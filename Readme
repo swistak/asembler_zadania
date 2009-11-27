@@ -1,0 +1,8 @@
+W tym repozytorium znajdują się zadania przerabiane na laboratoriach Asemblery i systemy wbudowane.
+Na kierunku Informatyka, na AGH w Krakowie.
+
+Wszystkie pisane są w asemblerze Nasm, i jest on potrzebny do kompilacji.
+
+Programy posiadają dużą ilosć komentarzy.
+
+kompiluje i uruchamia się je poleceniem ./c nazwa_pliku
