@@ -1,3 +1,6 @@
 #!/bin/sh
 
-nasm -f elf $1.asm && ld $1.o -o $1.bin && ./$1.bin
+mkdir -p bin
+FNAME=`basename $1 .asm`
+nasm -f elf $FNAME.asm -o bin/$FNAME.o && ld bin/$FNAME.o -o bin/$FNAME && bin/$FNAME
+
