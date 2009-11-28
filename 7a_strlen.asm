@@ -1,38 +1,12 @@
 segment .data
-test    db 'raz dwa trzy',0
+test_str    db      "raz dwa trzy", 0
+
+segment .bss
+
+write_buffer resb 16
 
 segment .text
-global start, _strlen
-extern _print_nmber
-
-_strlen:
-        push ebp                 ; Zachowujemy wartość ebp
-        mov  ebp, esp            ; i przenosimy do niego esp
-        push edi                 ; zachowujemy wartość edi
-
-        xor  eax                 ; zerujemy al żeby móc porównywać z 0 przy pomocy scasb
-        or   ecx, 0xffffffff     ; ustawiamy ecx na bardzo dużą wartość.
-        mov  edi, [ebp + 8]      ; do edi wrzucamy adres poczatku lancucha znajdujacy sie pod [ebp+8]
-
-        repne scasb              ; porownoj az cmp al,[edi] albo ecx = 0
-
-        mov  eax, edi            ; do eax przenosimy adres edi
-        sub  eax, [ebp + 8]      ; odejmujemy początek łancucha
-        sub  eax, 2              ; edi jest po ostatniej instrukcji scasb o jeden za daleko, dodatkowo nie zliczamy 0 
-
-        pop  edi
-        pop  ebp
-        ret
-
-start:
-        push dword test
-        call _strlen
-        call _print_number
-
-exit:
-        mov eax, 1
-        mov eax, 0
-        int 0x80
+global _start, _strlen
 
 _print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej linii
         mov edi, write_buffer + 14 ; zostawiamy jeden znak na końcu na nową linię
@@ -43,6 +17,7 @@ _print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej lin
         mov cl, 10              ; ustalamy dzielnik na 10
 
         division:
+          xor edx, edx
           div ecx               ; eax = eax mod ecx
                                 ; edx = eax rem ecx
           add dl, 48            ; dodajemy '0'
@@ -61,4 +36,34 @@ _print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej lin
         int 0x80
 
         ret
+
+_strlen:
+        push ebp                 ; Zachowujemy wartość ebp
+        mov  ebp, esp            ; i przenosimy do niego esp
+        push edi                 ; zachowujemy wartość edi
+
+        xor  eax, eax            ; zerujemy al żeby móc porównywać z 0 przy pomocy scasb
+        mov  ecx, 0xffffffff     ; ustawiamy ecx na bardzo dużą wartość.
+        mov  edi, [ebp + 8]      ; do edi wrzucamy adres poczatku lancucha znajdujacy sie pod [ebp+8]
+
+        repne scasb              ; porownoj az cmp al,[edi] albo ecx = 0
+
+        mov  eax, edi            ; do eax przenosimy adres edi
+        sub  eax, [ebp + 8]      ; odejmujemy początek łancucha
+        sub  eax, 1              ; nie zliczamy 0 
+
+        pop  edi
+        pop  ebp
+        ret
+
+_start:
+        push dword test_str
+        call _strlen
+        call _print_number
+
+exit:
+        mov eax, 1
+        mov ebx, 0
+        int 0x80
+
 
