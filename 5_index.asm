@@ -1,7 +1,7 @@
 segment .data
 what         db   1,2 
 what_length  equ  $-what
-where        db   1,2,1,2
+where        db   1,2,1,2,0,0,0,0,0,0,0,1,2
 where_length equ  $-where
 
 segment .bss
@@ -19,11 +19,12 @@ _print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej lin
         mov cl, 10              ; ustalamy dzielnik na 10
 
         division:
+          xor edx, edx
           div ecx               ; eax = eax mod ecx
                                 ; edx = eax rem ecx
           add dl, 48            ; dodajemy '0'            
           mov [edi], dl         ; kopiujemy znak do bufora
-          dec edi               ; przesuwamy wskaznik
+          dec edi               ; przesuwamy wskazni
           
           cmp eax, 0            ; nie mozna uzyc jz bo ZF jest ustawiane nie przez dzielenie tylko dec
         jne division
