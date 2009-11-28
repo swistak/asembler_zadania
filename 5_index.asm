@@ -8,7 +8,7 @@ segment .bss
 write_buffer resb 16
 
 segment .text
-        global _start
+        global _start, _print_number
 
 _print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej linii
         mov edi, write_buffer + 14 ; zostawiamy jeden znak na końcu na nową linię
