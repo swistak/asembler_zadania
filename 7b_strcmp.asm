@@ -1,3 +1,4 @@
+; UWAGA! Program posiada błąd którego w tej chwili nie chce mi się szukać, także proszę nie kopiować bezmyślnie
 segment .text
 global asm_strcmp
 
