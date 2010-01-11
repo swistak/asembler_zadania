@@ -6,3 +6,5 @@ Wszystkie pisane są w asemblerze Nasm, i jest on potrzebny do kompilacji.
 Programy posiadają dużą ilosć komentarzy.
 
 kompiluje i uruchamia się je poleceniem ./c nazwa_pliku
+dla programów łączonych z c używamy polecenia ./cc 
+nazwa pliku w c i asm muszą byc identyczne.

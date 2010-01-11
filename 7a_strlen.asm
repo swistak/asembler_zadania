@@ -1,7 +1,7 @@
 segment .text
-global _strlen
+global asm_strlen
 
-_strlen:
+asm_strlen:
         push ebp                 ; Zachowujemy wartość ebp
         mov  ebp, esp            ; i przenosimy do niego esp
         push edi                 ; zachowujemy wartość edi

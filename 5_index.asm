@@ -1,8 +1,9 @@
 segment .data
-what         db   1,2 
-what_length  equ  $-what
-where        db   1,2,1,2,0,0,0,0,0,0,0,1,2
+what         db   'ala',0 
+where        db   'ala ma kota, ale ala ma tez psa, aala'
 where_length equ  $-where
+marker       db   ' ^'
+eol          db   0x0a
 
 segment .bss
 write_buffer resb 16
@@ -10,63 +11,74 @@ write_buffer resb 16
 segment .text
         global _start, _print_number
 
-_print_number: ;wypisuje numer zawarty w rejestrze eax, razem z koncem nowej linii
-        mov edi, write_buffer + 14 ; zostawiamy jeden znak na końcu na nową linię
-        mov byte [edi+1], 0x0a  ; i ladujemy ja na sam koniec
-        
-        xor ecx, ecx            ; zerujemy ecx
-        xor edx, edx            ; zerujemy edx
-        mov cl, 10              ; ustalamy dzielnik na 10
-
-        division:
-          xor edx, edx
-          div ecx               ; eax = eax mod ecx
-                                ; edx = eax rem ecx
-          add dl, 48            ; dodajemy '0'            
-          mov [edi], dl         ; kopiujemy znak do bufora
-          dec edi               ; przesuwamy wskazni
-          
-          cmp eax, 0            ; nie mozna uzyc jz bo ZF jest ustawiane nie przez dzielenie tylko dec
-        jne division
-
-        mov edx, write_buffer + 16 ;obliczamy dlugosc lancucha
-        sub edx, edi
-        mov ecx, edi            ; w edi jest adres poczatku lancucha
-
-        mov eax, 4 ;write       ; i wolamy sys_write
+_p:
+        mov eax, 4 ;write   ;zakładamy że wołający zajął się przechowywaniem rejestrów, i umieścił adres do łańcucha w CX
         mov ebx, 1 ;stdout
+        mov edx, 1          ; ustawiamy długość na 1
         int 0x80
-
         ret
 
-_start: 
-        mov edi, where
-        mov al, [what]          ; bierzemy pierwszy poszukiwany znak
-        mov ecx, where_length - what_length + 1; 
-        cld
+_find: 
+        mov edi, ebx            ; do edi lancuch docelowy
+        mov al, [eax]           ; bierzemy pierwszy poszukiwany znak szukanego do porownywania
+                                ; w ecx mamy dlugosc docelowego
+        cld                     ; ustalamy kierunek przeszukiwania
         
         find_first:
-          repne scasb                 ; porownoj az cmp al,[edi] albo ecx = 0
-                                      ; znalezlismy pierwszy znak albo zakonczylismy poszukiwanie
-          jne _exit                   ; jesli ostatnie porownanie nie ustawilo odpowiedniej flagi to wychodzimy                   
+          cmp_loop:
+            scasb                 ; porownoj az cmp al,[edi] albo ecx = 0
+            je next               ; jesli udalo nam sie porownac przeskakujemy do przodu
+            pushad                ; wypisujemy spacje
+              mov ecx, marker
+              call _p
+            popad
+          loop cmp_loop           ; kontynuujemy petle az ecx bedzie 0
+          jmp _end_find           ; konczymy wyszukiwanie
+         
+         next:
+          mov esi, what + 1           ; zaczynamy od drugiego znaku, edi jest juz tez na odpowiedniej pozycji
 
-          pushad                      ; zrzucamy rejestry na stos, zebysmy mogli manipulowac ecx
-            mov ecx, what_length - 1  ; pierwszy znak juz dopasowalismy
-            mov esi, what + 1         ; wiec zaczynamy od drugiego, edi jest juz tez na odpowiedniej pozycji
+          push ecx
+          push edi                    ; zrzucamy rejestry na stos, zebysmy mogli wrocic do oryginalnej wartosci ecx i edi
+            repe cmpsb                ; porownojemy [edi] oraz [esi]
+          pop  edi                    ; podnosimy rejestry ze stosu, EDI i ECX powinny miec stare wartosci
+          pop  ecx
+  
+          pushad                      ; Wypisujemy odpowiedni marker zaleznie czy ostani znak ktory porownalismy byl 0
+            dec esi
+            mov ecx, marker
+            cmp byte [esi], 0         ; spawdzamy czy ostatni porownany znak byl 0
+            jnz end_if
+              inc ecx
+            end_if:
 
-            repe cmpsb                ; porownujemy znaki az znajdziemy jeden ktory sie rozni, lub cx = 0
-          popad                       ; podnosimy rejestry ze stosu, EDI i ECX powinny miec stare wartosci
-          
-          jne find_first              ; jesli ostatnie porownanie nie bylo prawdziwe to
-                                      ; ponownie zaczynamy dopasowywac pierwszy znak
-          pushad
-            mov eax, edi              ; w edi jest pozycja wystapienia pierwszego znaku + 1 
-            sub eax, where + 1        ; wiec odejmujemy poczatek lancucha + 1
-            call _print_number        ; wypisujemy numer
+            call _p
           popad
-
-        jmp find_first                ; nie uzywamy loop, bo repne i tak zmniejsza ecx
           
+        jmp find_first                ; nie uzywamy loop, bo repne i tak zmniejsza ecx
+_end_find:
+        ret
+
+_start:
+        mov eax, 4 ;write             ; wypisujemy poszukiwany lancuch
+        mov ebx, 1 ;stdout
+        mov ecx, where
+        mov edx, where_length
+        int 0x80
+
+        mov ecx, eol                  ; wupisujemy koniec linii 
+        call _p
+
+        mov eax, what                 ; uruchamiamy wyszukiwanie
+        mov ebx, where
+        mov ecx, where_length
+        
+        call _find                    ; 
+
+        mov ecx, eol                  ; i koniec linii
+        call _p
+
+
 _exit:
         mov eax, 1
         mov ebx, 0

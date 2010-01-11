@@ -1,13 +1,17 @@
 #include <stdio.h>
+#include <stdint.h>
 
-int strlen(const char*) __attribute__((ccdl));
+int asm_strlen(const char*);// __attribute__((ccdl));
 
 int main(void) {
-  char to_count[] = "123456789";
-  int x = 0;
+  char to_count[] = "123456789\0";
+  size_t x = 0;
+  const char * s;
 
-  x = strlen(to_count);
-  printf("lancuch '%s' ma %d znakow", to_count, &x);
-  
+  s = to_count;
+
+  x = asm_strlen(to_count);
+  printf("lancuch '%s' ma %d znakow \n", to_count, x);
 }
+
 
